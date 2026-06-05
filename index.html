@@ -11,6 +11,7 @@
   --card: #ffffff;
   --border: #e0e4eb;
   --text: #1a1d2e;
+  --fg: #1a1d2e;
   --muted: #6b7280;
   --hover: #f8f9fc;
   --primary: #2c3e50;
@@ -121,9 +122,14 @@ tr.url-toggleable:hover td { background: var(--hover); }
 .mode-toggle .flabel { font-size: 11px; }
 
   /* Dark mode */
-  body.dark { --bg:#0f1117; --card:#1a1d27; --border:#2d3142; --fg:#e8eaf0; --muted:#8b9ab0; --hover:#23273a; }
-  .dark-toggle { background:none;border:none;cursor:pointer;font-size:16px;padding:4px 8px;border-radius:6px;color:var(--muted);transition:color .15s; }
-  .dark-toggle:hover { color:var(--fg); }
+  body { transition: background-color .2s, color .2s; }
+  body.dark { color-scheme: dark; --bg:#0f1117; --card:#1a1d27; --border:#2d3142; --text:#e8eaf0; --fg:#e8eaf0; --muted:#8b9ab0; --hover:#23273a; --primary:#4a6fa5; }
+  body.dark .card-hdr { background: #161920; }
+  body.dark th { background: #161920; }
+  body.dark .err { background: #2d1b1b; border-color: #5a2020; color: #f08080; }
+  body.dark select, body.dark input[type=date] { color-scheme: dark; }
+  .dark-toggle { background:none;border:none;cursor:pointer;font-size:16px;padding:4px 8px;border-radius:6px;color:#888;transition:color .15s; }
+  .dark-toggle:hover { color:#e8eaf0; }
 
 </style>
 </head>
@@ -200,7 +206,8 @@ tr.url-toggleable:hover td { background: var(--hover); }
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script>
 function toggleDark() {
   const on = document.body.classList.toggle('dark');
   document.getElementById('darkBtn').textContent = on ? '☀️' : '🌙';
