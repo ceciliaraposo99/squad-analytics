@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InCred — Squad Analytics</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f6fa;
+  --card: #ffffff;
+  --border: #e0e4eb;
+  --text: #1a1d2e;
+  --muted: #6b7280;
+  --hover: #f8f9fc;
+  --primary: #2c3e50;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+/* Topbar */
+.topbar { background: #0f1117; border-bottom: none; padding: 9px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-icon { display: flex; align-items: center; }
+.logo-wordmark { display: flex; align-items: baseline; gap: 0; }
+.logo-wordmark span { font-size: 20px; font-weight: 900; letter-spacing: -1px; color: #ffffff; font-style: italic; }
+.logo-sep { width: 1px; height: 18px; background: #333; margin: 0 12px; }
+.logo-sub { font-size: 11px; color: #888; font-weight: 500; letter-spacing: 0.2px; }
+#ts { font-size: 11px; color: #888; }
+
+/* Filterbar */
+.filterbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fg { display: flex; align-items: center; gap: 5px; }
+.flabel { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.btn-grp { display: flex; }
+.btn-grp button, button.btn {
+  padding: 4px 10px; border: 1px solid var(--border); background: var(--card);
+  cursor: pointer; font-size: 12px; color: var(--text); transition: all .12s;
+}
+.btn-grp button:first-child { border-radius: 4px 0 0 4px; }
+.btn-grp button:last-child  { border-radius: 0 4px 4px 0; }
+.btn-grp button:not(:first-child) { border-left: none; }
+.btn-grp button.act, button.btn.act { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-grp button:hover:not(.act), button.btn:hover:not(.act) { background: var(--hover); }
+button.btn { border-radius: 4px; }
+select, input[type=date] {
+  padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px;
+  font-size: 12px; background: var(--card); color: var(--text); cursor: pointer;
+}
+
+/* Tabs */
+.tabbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; }
+.tbtn { padding: 9px 16px; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; transition: all .12s; }
+.tbtn.act { color: var(--text); border-bottom-color: #e84020; font-weight: 600; }
+.content { padding: 16px 20px; max-width: 1500px; }
+.tc { display: none; } .tc.act { display: block; }
+
+/* Squad section */
+.squad-sec { margin-bottom: 32px; }
+.squad-hdr { margin-bottom: 10px; }
+.company-tag { font-size: 9px; font-weight: 800; color: #fff; padding: 2px 8px; border-radius: 3px; display: inline-block; margin-bottom: 3px; letter-spacing: 1px; text-transform: uppercase; }
+.squad-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+.squad-doms { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.squad-grid { display: grid; grid-template-columns: 1fr 320px; gap: 14px; align-items: start; }
+.charts-col { display: flex; flex-direction: column; gap: 10px; }
+
+/* Cards */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.card-hdr { padding: 8px 13px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; background: #fafbfc; display: flex; align-items: center; justify-content: space-between; }
+.card-hdr-hint { font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; color: #bbb; }
+.chart-wrap { padding: 10px; height: 195px; position: relative; }
+.pie-wrap   { padding: 10px; height: 195px; position: relative; }
+
+/* Tables */
+.tbl-scroll { overflow-x: auto; overflow-y: visible; }
+.tbl-scroll::-webkit-scrollbar { height: 6px; }
+.tbl-scroll::-webkit-scrollbar-track { background: #f0f2f5; border-radius: 3px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background: #c5cad5; border-radius: 3px; }
+table { width: 100%; border-collapse: collapse; min-width: 800px; }
+th { padding: 7px 10px; font-size: 11px; font-weight: 600; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+th:first-child { text-align: left; }
+td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:first-child { text-align: left; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--hover); }
+.row-hidden { display: none; }
+.urlrow-hidden { display: none; }
+tr.url-toggleable { cursor: pointer; }
+tr.url-toggleable:hover td { background: var(--hover); }
+.hidden-pill { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;
+  padding:2px 10px;cursor:pointer;user-select:none;transition:all .15s; }
+.hidden-pill:hover { color:var(--fg);border-color:var(--muted); }
+.src-cell { cursor: pointer; font-weight: 600; user-select: none; }
+.src-cell:hover { color: #e84020; }
+.src-cell.dimmed { opacity: 0.35; text-decoration: line-through; }
+
+/* hcell */
+.hcell { display: inline-block; padding: 2px 7px; border-radius: 4px; font-weight: 700; min-width: 58px; text-align: center; font-size: 12px; }
+
+/* Loading / error */
+.loading { display: flex; align-items: center; justify-content: center; padding: 48px; color: var(--muted); gap: 10px; flex-direction: column; }
+.spin { width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: #e84020; border-radius: 50%; animation: sp .75s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.err  { background: #fff5f5; border: 1px solid #fcc; color: #c0392b; padding: 12px 16px; border-radius: 6px; margin: 8px 0; font-size: 13px; }
+.warn { background: #fffbf0; border: 1px solid #ffe5a0; color: #856404; padding: 8px 13px; border-radius: 6px; margin: 6px 0; font-size: 12px; }
+
+/* Tab 2 */
+.t2-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 13px; }
+.kpi-l { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.kpi-v { font-size: 20px; font-weight: 800; line-height: 1; }
+.kpi-s { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.t2-grid { display: grid; grid-template-columns: 1fr 340px; gap: 14px; align-items: start; }
+.url-bar { display: inline-block; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 5px; }
+.url-a { color: #3498db; text-decoration: none; font-size: 11px; } .url-a:hover { text-decoration: underline; }
+.sec-title { font-size: 13px; font-weight: 700; margin: 14px 0 8px; color: var(--text); }
+.t2-kpi-extra { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.mode-toggle { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.mode-toggle .flabel { font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <!-- InCred symbol: stylized infinity/ribbon in red-orange gradient -->
+    <div class="logo-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54 32" width="38" height="22">
+        <defs>
+          <linearGradient id="ig1" x1="0%" y1="20%" x2="100%" y2="80%">
+            <stop offset="0%" stop-color="#ff7043"/>
+            <stop offset="40%" stop-color="#e84020"/>
+            <stop offset="100%" stop-color="#c0300f"/>
+          </linearGradient>
+          <linearGradient id="ig2" x1="0%" y1="80%" x2="100%" y2="20%">
+            <stop offset="0%" stop-color="#ff8a65"/>
+            <stop offset="100%" stop-color="#d63118"/>
+          </linearGradient>
+        </defs>
+        <!-- Outer ribbon path — bottom layer (slightly darker) -->
+        <path d="M27,16 C24,9 18,4.5 12,4.5 C5.5,4.5 1.5,9 1.5,16 C1.5,23 5.5,27.5 12,27.5 C18,27.5 24,23 27,16 C30,9 36,4.5 42,4.5 C48.5,4.5 52.5,9 52.5,16 C52.5,23 48.5,27.5 42,27.5 C36,27.5 30,23 27,16 Z"
+          fill="none" stroke="url(#ig2)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+        <!-- Main ribbon path — front layer -->
+        <path d="M27,16 C24,9 18,4.5 12,4.5 C5.5,4.5 1.5,9 1.5,16 C1.5,23 5.5,27.5 12,27.5 C18,27.5 24,23 27,16 C30,9 36,4.5 42,4.5 C48.5,4.5 52.5,9 52.5,16 C52.5,23 48.5,27.5 42,27.5 C36,27.5 30,23 27,16 Z"
+          fill="none" stroke="url(#ig1)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Center crossing highlight -->
+        <circle cx="27" cy="16" r="2.2" fill="#e84020"/>
+        <circle cx="27" cy="16" r="1.2" fill="#ff9a7a"/>
+      </svg>
+    </div>
+    <div class="logo-wordmark"><span>incred</span></div>
+    <div class="logo-sep"></div>
+    <span class="logo-sub">Squad Analytics</span>
+  </div>
+  <span id="ts"></span>
+</div>
+
+<div class="filterbar">
+  <div class="fg">
+    <span class="flabel">Período</span>
+    <div class="btn-grp">
+      <button id="p3"  onclick="setPreset(3,this)">3d</button>
+      <button id="p7"  class="act" onclick="setPreset(7,this)">7d</button>
+      <button id="p14" onclick="setPreset(14,this)">14d</button>
+      <button id="p30" onclick="setPreset(30,this)">30d</button>
+    </div>
+  </div>
+  <div class="fg"><span class="flabel">De</span><input type="date" id="df" onchange="clearPreset()"></div>
+  <div class="fg"><span class="flabel">Até</span><input type="date" id="dt" onchange="clearPreset()"></div>
+  <div class="fg">
+    <span class="flabel">Company</span>
+    <select id="selCo" onchange="onCoChange()">
+      <option value="all">Todas</option>
+      <option value="Creditável">Creditável</option>
+      <option value="Neocred">Neocred</option>
+    </select>
+  </div>
+  <div class="fg">
+    <span class="flabel">Squad</span>
+    <select id="selSq" onchange="onSqChange()">
+      <option value="all">Todos</option>
+    </select>
+  </div>
+  <button class="btn act" onclick="loadData()" style="margin-left:auto">↺ Atualizar</button>
+</div>
+
+<div class="tabbar">
+  <button class="tbtn act" onclick="goTab(0,this)">Source Performance</button>
+  <button class="tbtn" onclick="goTab(1,this)">Source / URL Detail</button>
+</div>
+
+<div class="content">
+  <div id="t1" class="tc act">
+    <div id="t1body"><div class="loading"><div class="spin"></div><span>Carregando dados...</span></div></div>
+  </div>
+  <div id="t2" class="tc">
+    <div class="t2-filters">
+      <div class="fg"><span class="flabel">Company</span>
+        <select id="t2co" onchange="t2Reload()">
+          <option value="Creditável">Creditável</option>
+          <option value="Neocred">Neocred</option>
+        </select></div>
+      <div class="fg"><span class="flabel">Squad</span><select id="t2sq" onchange="t2SqChange()"></select></div>
+      <div class="fg"><span class="flabel">Source</span><select id="t2src" onchange="renderT2()"></select></div>
+      <!-- Period mode toggle -->
+      <div class="mode-toggle">
+        <span class="flabel">Exibir como</span>
+        <div class="btn-grp">
+          <button id="modeTotal" class="act" onclick="setMode('total',this)">Total do período</button>
+          <button id="modeAvg"   onclick="setMode('avg',this)">Média por dia</button>
+        </div>
+      </div>
+    </div>
+    <div id="t2body"><div class="loading"><div class="spin"></div><span>Selecione um squad e source</span></div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script>
+// Queries go via /api/query (Node server) or window.cowork (Cowork artifact)
+
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const CFG = {
+  'Creditável': {
+    hex: '#3498db',
+    squads: {
+      'Squad Brasil': {
+        hex: '#e74c3c',
+        domains: ['creditavel.com','br.mifinanzzas.com','zupscore.com','limitroute.com','credfinanzzas.com'],
+        bal: {
+          'google':      { slug:'b01-emprestimos-brasil-aw', urls:[{u:'https://creditavel.com/rec/emprestimo-super-sim/',p:90,s:'creditavel.com'},{u:'https://br.mifinanzzas.com/rec/emprestimo-nubank-2/',p:10,s:'br.mifinanzzas.com'}]},
+          'fl24h-ev':    { slug:'email-ep-br-fl24h',         urls:[{u:'https://br.mifinanzzas.com/rec/emprestimo-supersim1/',p:100,s:'br.mifinanzzas.com'}]},
+          'everinbox03': { slug:'email-ep-br-everinbox',     urls:[{u:'https://br.mifinanzzas.com/rec/emprestimo-supersim1/',p:70,s:'br.mifinanzzas.com'},{u:'https://br.mifinanzzas.com/rec/scredito/',p:10,s:'br.mifinanzzas.com'},{u:'https://zupscore.com/rec/emprestimo-supersim1/',p:10,s:'zupscore.com'},{u:'https://limitroute.com/rec/emprestimo-supersim1/',p:10,s:'limitroute.com'}]},
+          'welcomedrip': { slug:'ep-br-push-welcomedrip',    urls:[{u:'https://br.mifinanzzas.com/rec/emprestimo-supersim1/',p:50,s:'br.mifinanzzas.com'},{u:'https://br.mifinanzzas.com/rec/emprestimo-supersim1-300/',p:40,s:'br.mifinanzzas.com'},{u:'https://zupscore.com/rec/emprestimo-supersim1/',p:5,s:'zupscore.com'},{u:'https://limitroute.com/rec/emprestimo-supersim1/',p:5,s:'limitroute.com'}]},
+          'pushalert':   { slug:'ep-br-pushalert',            urls:[{u:'https://br.mifinanzzas.com/rec/emprestimo-supersim1/',p:100,s:'br.mifinanzzas.com'}]},
+          'wpp':         { slug:'epbr-wpp',                   urls:[{u:'https://creditavel.com/saiba-como-solicitar-emprestimo-pre-aprovado1/',p:10,s:'creditavel.com'},{u:'https://creditavel.com/saiba-como-solicitar-emprestimo-pre-aprovado/',p:90,s:'creditavel.com'}]},
+          'sms1':        { slug:'ep-br-sms',                  urls:[{u:'https://creditavel.com/rec/emprestimo-super-sim-ogc/',p:100,s:'creditavel.com'}]}
+        }
+      },
+      'Squad USA 1': {
+        hex: '#2980b9',
+        domains: ['minimalguy.com','cashurio.com','happenplace.com','mifinanzzas.com','en.creditavel.org'],
+        bal: {
+          'display':     { slug:'b08-cartao-usa-display',               urls:[{u:'https://minimalguy.com/your-new-card/',p:80,s:'minimalguy.com'},{u:'https://cashurio.com/your-options/',p:20,s:'cashurio.com'}]},
+          'googledv':    { slug:'b09-cartao-usa-dv360',                 urls:[{u:'https://minimalguy.com/your-new-card-dvh1/',p:50,s:'minimalguy.com'},{u:'https://minimalguy.com/your-new-card/',p:50,s:'minimalguy.com'}]},
+          'fl24h-ev2':   { slug:'cc-usa-email-fl24h-everinbox-new-card',urls:[{u:'https://minimalguy.com/your-new-card/',p:60,s:'minimalguy.com'},{u:'https://happenplace.com/recommends-options-4/',p:40,s:'happenplace.com'},{u:'https://cashurio.com/your-options/',p:5,s:'cashurio.com'}]},
+          'everinbox02': { slug:'cc-usa-email-bd-everinbox02',           urls:[{u:'https://minimalguy.com/your-new-card/',p:25,s:'minimalguy.com'},{u:'https://cashurio.com/your-options/',p:15,s:'cashurio.com'},{u:'https://happenplace.com/recommends-options-4/',p:60,s:'happenplace.com'}]},
+          'welcomedrip': { slug:'cc-usa-push-wd',                       urls:[{u:'https://minimalguy.com/your-new-card/',p:50,s:'minimalguy.com'},{u:'https://cashurio.com/your-options/',p:50,s:'cashurio.com'}]},
+          'pushalert':   { slug:'cc-usa-push-bd',                       urls:[{u:'https://minimalguy.com/your-new-card/',p:80,s:'minimalguy.com'},{u:'https://cashurio.com/your-options/',p:20,s:'cashurio.com'}]},
+          'wpp':         { slug:'cc-usa-push-wpp',                      urls:[{u:'https://minimalguy.com/your-new-card/',p:100,s:'minimalguy.com'}]},
+          'sms':         { slug:'cc-usa-push-smsusa',                   urls:[{u:'https://minimalguy.com/your-new-card/',p:100,s:'minimalguy.com'}]},
+          'messengerfb': { slug:'cc-usa-push-messenger',                urls:[{u:'https://minimalguy.com/your-new-card/',p:100,s:'minimalguy.com'}]}
+        }
+      },
+      'Squad USA 2': {
+        hex: '#27ae60',
+        domains: ['credlin.org','finanpret.com','fintrixio.com','dinstoday.com'],
+        bal: {
+          'google':      { slug:'cc-us02-google',      urls:[{u:'https://credlin.org/your-options/',p:95,s:'credlin.org'},{u:'https://finanpret.com/your-options-2/',p:5,s:'finanpret.com'}]},
+          'fl24h-ev':    { slug:'cc-us02-fl24h-ev',    urls:[{u:'https://fintrixio.com/your-options/',p:100,s:'fintrixio.com'}]},
+          'everinbox':   { slug:'cc-us02-everinbox',   urls:[{u:'https://fintrixio.com/your-options/',p:50,s:'fintrixio.com'},{u:'https://finanpret.com/your-options-2/',p:50,s:'finanpret.com'}]},
+          'everinbox-c': { slug:'cc-us02-everinbox-c', urls:[{u:'https://fintrixio.com/your-options/',p:100,s:'fintrixio.com'}]},
+          'welcomedrip': { slug:'cc-us02-welcomedrip', urls:[{u:'https://finanpret.com/your-options-2/',p:100,s:'finanpret.com'}]},
+          'pushalert':   { slug:'cc-us02-pushalert',   urls:[{u:'https://finanpret.com/your-options-2/',p:50,s:'finanpret.com'},{u:'https://fintrixio.com/your-options/',p:50,s:'fintrixio.com'}]},
+          'wpp':         { slug:'cc-us02-wpp',         urls:[{u:'https://finanpret.com/your-options-2/',p:50,s:'finanpret.com'},{u:'https://fintrixio.com/your-options/',p:50,s:'fintrixio.com'}]},
+          'sms':         { slug:'cc-us02-smsusa',      urls:[{u:'https://fintrixio.com/your-options/',p:100,s:'fintrixio.com'}]},
+          'messenger':   { slug:'cc-us02-messengerfb', urls:[{u:'https://finanpret.com/your-options-2/',p:50,s:'finanpret.com'},{u:'https://fintrixio.com/your-options/',p:50,s:'fintrixio.com'}]}
+        }
+      },
+      'Squad Argentina': {
+        hex: '#f39c12',
+        domains: ['guiafinanzzas.com'],
+        bal: {
+          'google':      { slug:'aquisicao-ep-arg-google', urls:[{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo/',p:90,s:'guiafinanzzas.com'},{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo-02/',p:10,s:'guiafinanzzas.com'}]},
+          'everinbox':   { slug:'email-ep-arg-everinbox',  urls:[{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo/',p:100,s:'guiafinanzzas.com'}]},
+          'fl24h-ev':    { slug:'email-ep-arg-fl24h-ev',   urls:[{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo/',p:100,s:'guiafinanzzas.com'}]},
+          'pushalert':   { slug:'push-ep-arg-pushalert',   urls:[{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo/',p:100,s:'guiafinanzzas.com'}]},
+          'welcomedrip': { slug:'push-ep-arg-welcomedrip', urls:[{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo/',p:100,s:'guiafinanzzas.com'}]},
+          'wpp':         { slug:'push-ep-arg-wpp',         urls:[{u:'https://guiafinanzzas.com/rec/elegi-tu-prestamo/',p:100,s:'guiafinanzzas.com'}]}
+        }
+      }
+    }
+  },
+  'Neocred': {
+    hex: '#8e44ad',
+    squads: {
+      'Squad Brasil': {
+        hex: '#e67e22',
+        domains: ['credon.com.br','credtips.net','economigo.org','cashsimples.com'],
+        bal: {
+          'fl24h-ev':    { slug:'ct-br-ep-evb-aut',         urls:[{u:'https://credon.com.br/rec/emprestimo-shopee/',p:100,s:'credon.com.br'}]},
+          'welcomedrip': { slug:'ep-ct-br-fl24h-pushalert', urls:[{u:'https://credon.com.br/rec/organize-suas-financas/',p:100,s:'credon.com.br'}]},
+          'pushalert':   { slug:'ep-cd-br-pushalert',       urls:[{u:'https://credon.com.br/rec/emprestimo-shopee/',p:70,s:'credon.com.br'},{u:'https://credon.com.br/rec/emprestimo-supersim-vd/',p:30,s:'credon.com.br'}]},
+          'everinbox':   { slug:'ct-br-ep-evb',             urls:[{u:'https://credon.com.br/rec/emprestimo-shopee/',p:100,s:'credon.com.br'}]},
+          'messengerfb': { slug:'ep-br-messengerfb',        urls:[{u:'https://economigo.org/rec/seu-emprestimo-ideal-2/',p:100,s:'economigo.org'}]},
+          'google':      { slug:'b01-neocred-br-google',    urls:[{u:'https://credon.com.br/rec/emprestimo-supersim/',p:100,s:'credon.com.br'}]}
+        }
+      },
+      'Squad USA': {
+        hex: '#16a085',
+        domains: ['economyeagle.com'],
+        bal: {
+          'fl24h-ev2':   { slug:'ee-usa-cc',                 urls:[{u:'https://economyeagle.com/rec/your-new-card/',p:100,s:'economyeagle.com'}]},
+          'everinbox02': { slug:'ee-usa-cc-bd',              urls:[{u:'https://economyeagle.com/rec/your-new-card/',p:95,s:'economyeagle.com'},{u:'https://economyeagle.com/us-p3-wells-fargo-reflect-card/',p:5,s:'economyeagle.com'}]},
+          'welcomedrip': { slug:'cc-ee-usa-fl24h-pushalert', urls:[{u:'https://economyeagle.com/rec/your-new-card/',p:100,s:'economyeagle.com'}]},
+          'pushalert':   { slug:'cc-ee-usa-pushalert',       urls:[{u:'https://economyeagle.com/rec/your-new-card/',p:100,s:'economyeagle.com'}]}
+        }
+      }
+    }
+  }
+};
+
+const SRC_CLR = {
+  display:'#c0392b', googledv:'#e74c3c', google:'#e67e22', facebookdv360:'#3498db',
+  'fl24h-ev':'#27ae60', 'fl24h-ev2':'#2ecc71', 'fl24h':'#1abc9c',
+  everinbox:'#8e44ad', everinbox02:'#9b59b6', everinbox03:'#6c3483', 'everinbox-c':'#a569bd',
+  welcomedrip:'#d68910', pushalert:'#d35400', wpp:'#1db954', sms:'#00acc1', sms1:'#0097a7',
+  messengerfb:'#0084ff', messenger:'#2196f3', fb:'#4267b2', meta:'#1877f2',
+  direct:'#95a5a6', organic:'#bdc3c7'
+};
+const SC = s => SRC_CLR[s] || '#7f8c8d';
+const URL_PALETTE = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#16a085'];
+
+const EXCL = new Set(['direct','organic','sendmail','pushsites','Pushsites','google1','push-ep',
+  'pushalert_7dfrio','pushalert_3dquente','pushalertcc','activecampaign','ActiveCampaign',
+  'wdfb','fl24h-evfb','fl24h-h2','spush']);
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const usd  = n => (n == null || isNaN(n) || n === 0) ? '—' : '$' + (+n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num  = n => (n == null || isNaN(n)) ? '—' : Math.round(+n).toLocaleString('en-US');
+const pth  = url => { try { return new URL(url).pathname; } catch { return url; } };
+const today = () => new Date().toISOString().slice(0,10);
+const dago  = n  => { const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
+function fmtDur(sec) {
+  if (sec == null || isNaN(sec) || sec <= 0) return '—';
+  const s = Math.round(sec);
+  if (s < 60) return s + 's';
+  return Math.floor(s/60) + 'm ' + (s%60).toString().padStart(2,'0') + 's';
+}
+function fmtPct(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (+v * 100).toFixed(1) + '%';
+}
+function heat(v, mx, r, g, b) {
+  if (!mx || !v || v <= 0) return 'transparent';
+  const a = 0.12 + Math.min(v/mx,1) * 0.55;
+  return `rgba(${r},${g},${b},${a})`;
+}
+function allDomains() {
+  return [...new Set(Object.values(CFG).flatMap(c=>Object.values(c.squads).flatMap(s=>s.domains)))];
+}
+function normalizeUrl(u) {
+  return (u || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+}
+function prevPeriod() {
+  const from = new Date(ST.from + 'T00:00:00Z');
+  const to   = new Date(ST.to   + 'T00:00:00Z');
+  const dur  = Math.round((to - from) / 86400000);
+  const pTo  = new Date(from);
+  const pFrom = new Date(from);
+  pFrom.setUTCDate(pFrom.getUTCDate() - dur);
+  return {
+    from: pFrom.toISOString().slice(0,10),
+    to:   pTo.toISOString().slice(0,10),
+    days: dur
+  };
+}
+function safeId(str) { return str.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let ST = { from: dago(7), to: today(), co: 'all', sq: 'all' };
+let RAW_REV = [], RAW_SESS = [], RAW_SCROLL = [], RAW_DUR = [];
+let CHARTS = {};
+const HIDDEN = {};      // "co||sq" → Set<string> of source names (Tab 1)
+const HIDDEN_URLS = {}; // "co||sq" → Set<string> of urlrow rids (Tab 2)
+let T2_MODE = 'total';        // 'total' | 'avg'
+let T2_URL_GROUP = 'source';  // 'source' | 'url'  (all-sources chart grouping)
+// Cache for all-URL chart data (avoids re-querying on toggle)
+let T2_URL_CACHE = null; // { co, sq, urlRows, sessBySrcDate, urlSrcData, dates }
+
+function toggleSrc(coSq, src) {
+  if (!HIDDEN[coSq]) HIDDEN[coSq] = new Set();
+  const sid = safeId(coSq + '_' + src);
+  const tr  = document.getElementById('tr_' + sid);
+  const lbl = document.getElementById('lbl_' + sid);
+  if (HIDDEN[coSq].has(src)) {
+    HIDDEN[coSq].delete(src);
+    if (tr)  tr.classList.remove('row-hidden');
+    if (lbl) lbl.classList.remove('dimmed');
+  } else {
+    HIDDEN[coSq].add(src);
+    if (tr)  tr.classList.add('row-hidden');
+    if (lbl) lbl.classList.add('dimmed');
+  }
+}
+
+// Toggle URL row visibility (Tab 2 URL table)
+function toggleUrlRow(coSq, rid) {
+  if (!HIDDEN_URLS[coSq]) HIDDEN_URLS[coSq] = new Set();
+  const tr = document.getElementById(rid);
+  if (!tr) return;
+  if (HIDDEN_URLS[coSq].has(rid)) {
+    HIDDEN_URLS[coSq].delete(rid);
+    tr.classList.remove('urlrow-hidden');
+  } else {
+    HIDDEN_URLS[coSq].add(rid);
+    tr.classList.add('urlrow-hidden');
+  }
+  _updateHiddenPill(coSq);
+  if (window._lastT2AllArgs) loadT2AllUrlChart(...window._lastT2AllArgs);
+}
+
+function _retryUrlChart(coSq) {
+  // Invalidate cache so next call re-queries
+  T2_URL_CACHE = null;
+  if (window._lastT2AllArgs) loadT2AllUrlChart(...window._lastT2AllArgs);
+}
+
+function _updateHiddenPill(coSq) {
+  const pill = document.getElementById('urlhidden_pill_' + safeId(coSq));
+  if (!pill) return;
+  const count = HIDDEN_URLS[coSq]?.size || 0;
+  if (count === 0) {
+    pill.style.display = 'none';
+  } else {
+    pill.style.display = 'inline-flex';
+    pill.innerHTML = `👁 ${count} oculta${count > 1 ? 's' : ''} — mostrar`;
+  }
+}
+
+function showAllUrlRows(coSq) {
+  if (!HIDDEN_URLS[coSq]) return;
+  HIDDEN_URLS[coSq].forEach(rid => {
+    const tr = document.getElementById(rid);
+    if (tr) tr.classList.remove('urlrow-hidden');
+  });
+  HIDDEN_URLS[coSq].clear();
+  _updateHiddenPill(coSq);
+  if (window._lastT2AllArgs) loadT2AllUrlChart(...window._lastT2AllArgs);
+}
+
+function setMode(mode, btn) {
+  T2_MODE = mode;
+  document.querySelectorAll('#modeTotal,#modeAvg').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  renderT2();
+}
+function setUrlGroup(group, btn) {
+  T2_URL_GROUP = group;
+  document.querySelectorAll('.grp-btn').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  // just re-render the chart without reloading the full page
+  const co = $('t2co')?.value, sq = $('t2sq')?.value;
+  const sqCfg = CFG[co]?.squads?.[sq];
+  if (!sqCfg) return;
+  const domSet = new Set(sqCfg.domains);
+  const dateSet = new Set(RAW_REV.filter(r => domSet.has(r.domain)).map(r => r.date));
+  const dates = [...dateSet].sort();
+  loadT2AllUrlChart(co, sq, sqCfg, dates);
+}
+
+// ── PRESET / FILTER ────────────────────────────────────────────────────────
+function setPreset(d, btn) {
+  document.querySelectorAll('.btn-grp button').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  ST.from = dago(d); ST.to = today();
+  $('df').value = ST.from; $('dt').value = ST.to;
+  loadData();
+}
+function clearPreset() {
+  document.querySelectorAll('#p3,#p7,#p14,#p30').forEach(b => b.classList.remove('act'));
+  ST.from = $('df').value; ST.to = $('dt').value;
+}
+function onCoChange() { ST.co = $('selCo').value; ST.sq = 'all'; refreshSqOptions(); renderT1(); }
+function onSqChange() { ST.sq = $('selSq').value; renderT1(); }
+function refreshSqOptions() {
+  const sel = $('selSq');
+  sel.innerHTML = '<option value="all">Todos</option>';
+  if (ST.co !== 'all' && CFG[ST.co]) {
+    Object.keys(CFG[ST.co].squads).forEach(sq => {
+      const o = document.createElement('option'); o.value = sq; o.textContent = sq; sel.appendChild(o);
+    });
+  }
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function goTab(i, btn) {
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('act'));
+  document.querySelectorAll('.tc').forEach(t => t.classList.remove('act'));
+  btn.classList.add('act');
+  document.querySelectorAll('.tc')[i].classList.add('act');
+  if (i === 1) initT2();
+}
+
+// ── PARSE ROWS ─────────────────────────────────────────────────────────────
+function parseRows(result) {
+  if (!result) return [];
+  // Detect MCP error responses — throw so callers can handle gracefully
+  if (result?.isError === true) {
+    const msg = result?.content?.find?.(c => c?.type === 'text')?.text || 'MCP error';
+    throw new Error(msg);
+  }
+  if (Array.isArray(result)) return result;
+  if (result?.data?.rows) return result.data.rows;
+  if (result?.rows) return result.rows;
+  if (Array.isArray(result?.content)) {
+    for (const c of result.content) {
+      if (c?.type === 'text' && c?.text) {
+        try {
+          const p = JSON.parse(c.text);
+          if (p?.isError) throw new Error(p?.content?.find?.(x => x?.type==='text')?.text || 'MCP error');
+          if (p?.data?.rows) return p.data.rows;
+          if (p?.rows) return p.rows;
+          if (Array.isArray(p)) return p;
+        } catch(e) { if (e.message?.includes('MCP') || e.message?.includes('proxy')) throw e; }
+      }
+    }
+  }
+  if (typeof result === 'string') {
+    try { return parseRows(JSON.parse(result)); } catch(_) {}
+  }
+  return [];
+}
+
+
+// ── API QUERY ─────────────────────────────────────────────────────────────────
+// Works both in Cowork (window.cowork) and standalone (Node /api/query server)
+async function apiQuery(sql) {
+  if (window.cowork && typeof window.cowork.callMcpTool === 'function') {
+    return window.cowork.callMcpTool('mcp__222885a9-4449-47a3-ab11-422db4c3dfe8__mesh_query', { sql });
+  }
+  const res = await fetch('/api/query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sql })
+  });
+  if (!res.ok) throw new Error('Server error ' + res.status);
+  return res.json();
+}
+
+// ── LOAD DATA ──────────────────────────────────────────────────────────────
+async function _loadDataInner() {
+  ST.from = $('df').value || ST.from;
+  ST.to   = $('dt').value || ST.to;
+  const doms = allDomains();
+  const dl   = doms.map(d=>`'${d}'`).join(',');
+  T2_URL_CACHE = null; // invalidate cache on fresh load
+  $('t1body').innerHTML = '<div class="loading"><div class="spin"></div><span>Consultando Mesh…</span></div>';
+
+  const sqlRev =
+    `SELECT date, domain, replaceRegexpOne(channel_name, '^utm_source=', '') AS source, ` +
+    `sum(gam_revenue) AS revenue, sum(gam_ad_impressions) AS impressions, sum(gam_ad_requests) AS requests ` +
+    `FROM gam_report_daily_domain_channel_source FINAL ` +
+    `WHERE date >= '${ST.from}' AND date < '${ST.to}' ` +
+    `AND startsWith(channel_name, 'utm_source=') AND domain IN (${dl}) ` +
+    `GROUP BY date, domain, source ORDER BY date, revenue DESC LIMIT 8000`;
+
+  const sqlSess =
+    `SELECT date, domain, utm_source AS source, sum(sessions) AS sessions, sum(page_views) AS pv ` +
+    `FROM vw_analytics_by_domain_source ` +
+    `WHERE date >= '${ST.from}' AND date < '${ST.to}' AND domain IN (${dl}) ` +
+    `GROUP BY date, domain, source ORDER BY date, sessions DESC LIMIT 8000`;
+
+  const sqlScroll =
+    `SELECT toDate(ts) AS date, domain, utm_source AS source, ` +
+    `sum(sessions) AS sessions, round(avgMerge(scroll_depth_state), 2) AS avg_scroll ` +
+    `FROM agg_analytics_performance FINAL ` +
+    `WHERE toDate(ts) >= '${ST.from}' AND toDate(ts) < '${ST.to}' ` +
+    `AND domain IN (${dl}) AND utm_source != '' ` +
+    `GROUP BY date, domain, source LIMIT 8000`;
+
+  const sqlDur =
+    `SELECT date, domain, source, ` +
+    `avg(dur_sec) AS avg_dur_sec, ` +
+    `countIf(dur_sec < 15) / count() AS bounce_rate ` +
+    `FROM ( ` +
+    `  SELECT toDate(min(min_ts)) AS date, domain, utm_source AS source, ` +
+    `  dateDiff('second', min(min_ts), max(max_ts)) AS dur_sec ` +
+    `  FROM agg_sessions_content FINAL ` +
+    `  WHERE toDate(min_ts) >= '${ST.from}' AND toDate(min_ts) < '${ST.to}' ` +
+    `  AND domain IN (${dl}) AND utm_source != '' ` +
+    `  GROUP BY session_id, domain, utm_source ` +
+    `) GROUP BY date, domain, source LIMIT 8000`;
+
+  // If cowork not ready, render empty UI with retry button — don't block
+  if (!window.cowork?.callMcpTool) {
+    RAW_REV = []; RAW_SESS = []; RAW_SCROLL = []; RAW_DUR = [];
+    $('t1body').innerHTML =
+      `<div style="padding:40px 24px;text-align:center;color:var(--muted)">
+        <div style="font-size:32px;margin-bottom:12px">🔌</div>
+        <div style="font-weight:700;font-size:15px;color:var(--fg);margin-bottom:6px">Sem conexão com o Mesh</div>
+        <div style="font-size:12px;margin-bottom:20px">Clique em Atualizar para tentar novamente</div>
+        <button onclick="loadData()" style="background:#e84020;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">↺ Atualizar</button>
+      </div>`;
+    $('ts').textContent = 'Sem conexão · ' + new Date().toLocaleTimeString('pt-BR');
+    return;
+  }
+
+  try {
+    const results = await Promise.allSettled([
+      apiQuery(sqlRev),
+      apiQuery(sqlSess),
+      apiQuery(sqlScroll),
+      apiQuery(sqlDur)
+    ]);
+
+    const [rv, ss, sc, dr] = results;
+
+    // Check for connection errors first
+    const connErr = [rv, ss, sc, dr].find(r =>
+      r.status === 'rejected' && (r.reason?.message?.includes('MCP') || r.reason?.message?.includes('proxy') || r.reason?.message?.includes('connection'))
+    );
+    if (connErr) {
+      const errMsg = connErr.reason?.message || 'Conexão com o Mesh perdida';
+      $('t1body').innerHTML =
+        `<div class="err" style="text-align:center;padding:32px 24px">
+          <div style="font-size:28px;margin-bottom:12px">🔌</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px">Conexão com o Mesh perdida</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:20px">${errMsg}</div>
+          <button onclick="loadData()" style="background:#e84020;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">↺ Tentar novamente</button>
+        </div>`;
+      $('ts').textContent = 'Erro de conexão · ' + new Date().toLocaleTimeString('pt-BR');
+      return;
+    }
+
+    try { RAW_REV    = rv.status === 'fulfilled' ? parseRows(rv.value) : []; } catch(e) { RAW_REV = []; }
+    try { RAW_SESS   = ss.status === 'fulfilled' ? parseRows(ss.value) : []; } catch(e) { RAW_SESS = []; }
+    try { RAW_SCROLL = sc.status === 'fulfilled' ? parseRows(sc.value) : []; } catch(e) { RAW_SCROLL = []; }
+    try { RAW_DUR    = dr.status === 'fulfilled' ? parseRows(dr.value) : []; } catch(e) { RAW_DUR = []; }
+
+    if (!RAW_REV.length) {
+      const isConnErr = rv.status === 'rejected' || rv.value?.isError;
+      const errMsg = isConnErr
+        ? (rv.reason?.message || rv.value?.content?.[0]?.text || 'Sem resposta do servidor')
+        : 'Nenhum dado de receita no período e filtros selecionados.';
+      $('t1body').innerHTML =
+        `<div class="err" style="text-align:center;padding:32px 24px">
+          <div style="font-size:28px;margin-bottom:12px">${isConnErr ? '🔌' : '📭'}</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px">${isConnErr ? 'Falha na consulta' : 'Sem dados'}</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:20px">${errMsg}</div>
+          <button onclick="loadData()" style="background:#e84020;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">↺ Tentar novamente</button>
+        </div>`;
+      $('ts').textContent = (isConnErr ? 'Erro · ' : 'Sem dados · ') + new Date().toLocaleTimeString('pt-BR');
+      return;
+    }
+
+    const warnings = [];
+    if (!RAW_SCROLL.length) warnings.push('scroll indisponível');
+    if (!RAW_DUR.length)    warnings.push('duração/bounce indisponíveis');
+
+    $('ts').textContent =
+      `${new Date().toLocaleTimeString('pt-BR')} · ` +
+      `${RAW_REV.length} receita · ${RAW_SESS.length} sessões · ` +
+      `${RAW_SCROLL.length} scroll · ${RAW_DUR.length} dur` +
+      (warnings.length ? ` · ⚠️ ${warnings.join(', ')}` : '');
+
+    renderT1();
+    if (document.querySelectorAll('.tc')[1]?.classList.contains('act')) renderT2();
+
+  } catch(e) {
+    $('t1body').innerHTML =
+      `<div class="err" style="text-align:center;padding:32px 24px">
+        <div style="font-size:28px;margin-bottom:12px">🔌</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px">Erro de conexão</div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:20px">${e.message || String(e)}</div>
+        <button onclick="loadData()" style="background:#e84020;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">↺ Tentar novamente</button>
+      </div>`;
+    $('ts').textContent = 'Erro · ' + new Date().toLocaleTimeString('pt-BR');
+  }
+}
+
+// ── AGGREGATE ──────────────────────────────────────────────────────────────
+function agg(domains, filterSrcs) {
+  const domSet = new Set(domains);
+  const bySrc  = {};
+  const bySrcD = {};
+
+  RAW_REV.filter(r => domSet.has(r.domain)).forEach(r => {
+    if (EXCL.has(r.source)) return;
+    if (filterSrcs && !filterSrcs.includes(r.source)) return;
+    const s = r.source;
+    if (!bySrc[s]) bySrc[s] = {rev:0,imp:0,req:0,sess:0,pv:0,scrSum:0,scrW:0,durSum:0,durW:0,bnSum:0,bnW:0};
+    bySrc[s].rev += +r.revenue     || 0;
+    bySrc[s].imp += +r.impressions || 0;
+    bySrc[s].req += +r.requests    || 0;
+    const k = r.date+'|'+s;
+    if (!bySrcD[k]) bySrcD[k] = {rev:0,sess:0,req:0};
+    bySrcD[k].rev += +r.revenue  || 0;
+    bySrcD[k].req += +r.requests || 0;
+  });
+
+  RAW_SESS.filter(r => domSet.has(r.domain)).forEach(r => {
+    if (EXCL.has(r.source)) return;
+    if (filterSrcs && !filterSrcs.includes(r.source)) return;
+    const s = r.source;
+    if (!bySrc[s]) bySrc[s] = {rev:0,imp:0,req:0,sess:0,pv:0,scrSum:0,scrW:0,durSum:0,durW:0,bnSum:0,bnW:0};
+    bySrc[s].sess += +r.sessions || 0;
+    bySrc[s].pv   += +r.pv      || 0;
+    const k = r.date+'|'+s;
+    if (!bySrcD[k]) bySrcD[k] = {rev:0,sess:0,req:0};
+    bySrcD[k].sess += +r.sessions || 0;
+  });
+
+  RAW_SCROLL.filter(r => domSet.has(r.domain)).forEach(r => {
+    if (EXCL.has(r.source)) return;
+    if (filterSrcs && !filterSrcs.includes(r.source)) return;
+    const s = r.source;
+    if (!bySrc[s]) bySrc[s] = {rev:0,imp:0,req:0,sess:0,pv:0,scrSum:0,scrW:0,durSum:0,durW:0,bnSum:0,bnW:0};
+    const w = +r.sessions || 1;
+    bySrc[s].scrSum += (+r.avg_scroll || 0) * w;
+    bySrc[s].scrW   += w;
+  });
+
+  RAW_DUR.filter(r => domSet.has(r.domain)).forEach(r => {
+    if (EXCL.has(r.source)) return;
+    if (filterSrcs && !filterSrcs.includes(r.source)) return;
+    const s = r.source;
+    if (!bySrc[s]) bySrc[s] = {rev:0,imp:0,req:0,sess:0,pv:0,scrSum:0,scrW:0,durSum:0,durW:0,bnSum:0,bnW:0};
+    bySrc[s].durSum += +r.avg_dur_sec || 0;
+    bySrc[s].durW   += 1;
+    bySrc[s].bnSum  += +r.bounce_rate || 0;
+    bySrc[s].bnW    += 1;
+  });
+
+  const dates = [...new Set(Object.keys(bySrcD).map(k=>k.split('|')[0]))].sort();
+
+  const rows = Object.entries(bySrc)
+    .filter(([,v]) => v.rev > 0.05)
+    .map(([src, v]) => {
+      const mRPMS     = v.sess > 0 ? (v.rev / v.sess) * 1000 : null;
+      const eCPM      = v.imp  > 0 ? (v.rev / v.imp)  * 1000 : null;
+      const avgScroll = v.scrW > 0 ? v.scrSum / v.scrW  : null;
+      const avgDur    = v.durW > 0 ? v.durSum / v.durW  : null;
+      const bounce    = v.bnW  > 0 ? v.bnSum  / v.bnW   : null;
+      const trend = dates.map(d => {
+        const e = bySrcD[d+'|'+src] || {rev:0,sess:0,req:0};
+        return { date:d, rev:+e.rev, sess:+e.sess, req:+e.req,
+                 mRPMS: e.sess > 0 ? (e.rev/e.sess)*1000 : null };
+      });
+      return { src, rev:v.rev, imp:v.imp, req:v.req, sess:v.sess,
+               mRPMS, eCPM, avgScroll, avgDur, bounce, trend };
+    })
+    .sort((a,b) => b.rev - a.rev);
+
+  return { rows, dates };
+}
+
+// ── RENDER TAB 1 ───────────────────────────────────────────────────────────
+function renderT1() {
+  const body = $('t1body');
+  if (!RAW_REV.length) {
+    body.innerHTML = '<div class="loading"><span>Nenhum dado para o período selecionado.</span></div>';
+    return;
+  }
+
+  let squads = [];
+  Object.entries(CFG).forEach(([coName, coCfg]) => {
+    if (ST.co !== 'all' && ST.co !== coName) return;
+    Object.entries(coCfg.squads).forEach(([sqName, sqCfg]) => {
+      if (ST.sq !== 'all' && ST.sq !== sqName) return;
+      squads.push({ coName, sqName, sqCfg, coHex: coCfg.hex });
+    });
+  });
+
+  Object.values(CHARTS).forEach(c => { try { c.destroy(); } catch{} });
+  CHARTS = {};
+
+  let html = '';
+  const chartData = [];
+
+  squads.forEach(({ coName, sqName, sqCfg, coHex }) => {
+    const { rows, dates } = agg(sqCfg.domains);
+    if (!rows.length) return;
+
+    const maxM = Math.max(...rows.map(r => r.mRPMS || 0));
+    const maxE = Math.max(...rows.map(r => r.eCPM  || 0));
+    const coSq = coName + '||' + sqName;
+    const cidLine = 'cL_' + safeId(coSq);
+    const cidPie  = 'cP_' + safeId(coSq);
+    chartData.push({ cidLine, cidPie, rows, dates });
+
+    // Company name forced uppercase
+    const coLabel = coName.toUpperCase();
+
+    html += `<div class="squad-sec">
+      <div class="squad-hdr">
+        <div><span class="company-tag" style="background:${coHex}">${coLabel}</span></div>
+        <div class="squad-name">${sqName}</div>
+        <div class="squad-doms">${sqCfg.domains.slice(0,5).join(' · ')}</div>
+      </div>
+      <div class="squad-grid">
+        <div class="card">
+          <div class="card-hdr">
+            Source Performance
+            <span class="card-hdr-hint">clique na source para ocultar</span>
+          </div>
+          <div class="tbl-scroll">
+          <table><thead><tr>
+            <th>Channel</th>
+            <th>mRPMS</th>
+            <th>eCPM</th>
+            <th>Revenue</th>
+            <th>Requests</th>
+            <th>Sessões</th>
+            <th>Tempo Médio</th>
+            <th>Scroll Médio</th>
+            <th>Bounce</th>
+          </tr></thead><tbody>`;
+
+    rows.forEach(r => {
+      const mc  = heat(r.mRPMS, maxM, 231,76,60);
+      const ec  = heat(r.eCPM,  maxE, 52,152,219);
+      const sid = safeId(coSq + '_' + r.src);
+      const hidden = HIDDEN[coSq]?.has(r.src) ? ' row-hidden' : '';
+      const dimmed = HIDDEN[coSq]?.has(r.src) ? ' dimmed' : '';
+      const coSqEsc = coSq.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const srcEsc  = r.src.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      html += `<tr id="tr_${sid}" class="${hidden}">
+        <td><span id="lbl_${sid}" class="src-cell${dimmed}" onclick="toggleSrc('${coSqEsc}','${srcEsc}')">${r.src}</span></td>
+        <td><span class="hcell" style="background:${mc}">${usd(r.mRPMS)}</span></td>
+        <td><span class="hcell" style="background:${ec}">${usd(r.eCPM)}</span></td>
+        <td>${usd(r.rev)}</td>
+        <td>${num(r.req)}</td>
+        <td>${num(r.sess)}</td>
+        <td>${fmtDur(r.avgDur)}</td>
+        <td>${r.avgScroll != null ? r.avgScroll.toFixed(1)+'%' : '—'}</td>
+        <td>${fmtPct(r.bounce)}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div></div>
+        <div class="charts-col">
+          <div class="card">
+            <div class="card-hdr">mRPMS por Source</div>
+            <div class="chart-wrap"><canvas id="${cidLine}"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-hdr">Receita por Source</div>
+            <div class="pie-wrap"><canvas id="${cidPie}"></canvas></div>
+          </div>
+        </div>
+      </div></div>`;
+  });
+
+  body.innerHTML = html || '<div class="loading"><span>Nenhum dado para o filtro selecionado.</span></div>';
+
+  requestAnimationFrame(() => {
+    chartData.forEach(({ cidLine, cidPie, rows, dates }) => {
+      const cvL = $(cidLine);
+      if (cvL) {
+        CHARTS[cidLine] = new Chart(cvL, {
+          type: 'line',
+          data: {
+            labels: dates.map(d => d.slice(5)),
+            datasets: rows.slice(0,7).map(r => ({
+              label: r.src,
+              data:  r.trend.map(t => t.mRPMS != null ? +t.mRPMS.toFixed(2) : null),
+              borderColor: SC(r.src), backgroundColor: 'transparent',
+              tension: 0.3, pointRadius: 2, borderWidth: 2, spanGaps: true
+            }))
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position:'bottom', labels:{ boxWidth:10, font:{size:10}, padding:5 } } },
+            scales: {
+              x: { ticks:{ font:{size:10} }, grid:{ display:false } },
+              y: { ticks:{ font:{size:10}, callback: v => '$'+v.toFixed(0) }, grid:{ color:'#f0f2f5' } }
+            }
+          }
+        });
+      }
+      const cvP = $(cidPie);
+      if (cvP) {
+        const top = rows.slice(0,8);
+        CHARTS[cidPie] = new Chart(cvP, {
+          type: 'pie',
+          data: {
+            labels: top.map(r => r.src),
+            datasets: [{
+              data: top.map(r => +r.rev.toFixed(2)),
+              backgroundColor: top.map(r => SC(r.src) + 'cc'),
+              borderColor:     top.map(r => SC(r.src)),
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position:'right', labels:{ boxWidth:10, font:{size:10}, padding:5 } },
+              tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${usd(ctx.raw)}` } }
+            }
+          }
+        });
+      }
+    });
+  });
+}
+
+// ── TAB 2 INIT ─────────────────────────────────────────────────────────────
+let t2Inited = false;
+function initT2() {
+  if (!t2Inited) { t2Inited = true; fillT2Squads(); }
+  renderT2();
+}
+function fillT2Squads() {
+  const co = $('t2co').value, sq = $('t2sq');
+  sq.innerHTML = '';
+  Object.keys(CFG[co]?.squads || {}).forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s; sq.appendChild(o);
+  });
+  fillT2Sources();
+}
+function fillT2Sources() {
+  const co = $('t2co').value, sq = $('t2sq').value, src = $('t2src');
+  src.innerHTML = '';
+  // "All sources" option first
+  const all = document.createElement('option');
+  all.value = '__all__'; all.textContent = '⬡ Todas as sources (visão por URL)';
+  src.appendChild(all);
+  Object.keys(CFG[co]?.squads?.[sq]?.bal || {}).forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s; src.appendChild(o);
+  });
+}
+function t2Reload()   { fillT2Squads();  renderT2(); }
+function t2SqChange() { fillT2Sources(); renderT2(); }
+
+// ── COMPUTE KPIs (respects mode: total vs avg per day) ─────────────────────
+function computeKPIs(r, mode) {
+  if (!r) return { mRPMS:null, eCPM:null, rev:null, sess:null, imp:null, req:null, label:'' };
+  if (mode === 'total') {
+    return { mRPMS:r.mRPMS, eCPM:r.eCPM, rev:r.rev, sess:r.sess, imp:r.imp, req:r.req,
+             label:'total do período' };
+  }
+  // Average per active day
+  const validDays = r.trend.filter(t => t.rev > 0);
+  const n = validDays.length || 1;
+  const avgRev  = r.rev  / n;
+  const avgSess = r.sess / n;
+  const avgImp  = r.imp  / n;
+  const avgReq  = r.req  / n;
+  // mRPMS as average of daily mRPMS values (where data exists)
+  const dailymRPMS = validDays.filter(t => t.mRPMS != null).map(t => t.mRPMS);
+  const mRPMS = dailymRPMS.length > 0
+    ? dailymRPMS.reduce((a,b)=>a+b,0) / dailymRPMS.length : null;
+  const eCPM  = avgImp > 0 ? (avgRev / avgImp) * 1000 : null;
+  return { mRPMS, eCPM, rev:avgRev, sess:avgSess, imp:avgImp, req:avgReq,
+           label: `média por dia (${n}d ativos)` };
+}
+
+// ── RENDER TAB 2 ───────────────────────────────────────────────────────────
+function renderT2() {
+  const co   = $('t2co')?.value;
+  const sq   = $('t2sq')?.value;
+  const src  = $('t2src')?.value;
+  const body = $('t2body');
+  if (!co || !sq || !src || !RAW_REV.length) {
+    body.innerHTML = '<div class="loading"><span>Carregue os dados primeiro (↺ Atualizar)</span></div>';
+    return;
+  }
+  const sqCfg = CFG[co]?.squads?.[sq];
+  if (!sqCfg) { body.innerHTML = '<div class="err">Squad não encontrado.</div>'; return; }
+
+  // ── ALL SOURCES VIEW ──────────────────────────────────────────────────────
+  if (src === '__all__') {
+    renderT2AllSources(co, sq, sqCfg);
+    return;
+  }
+
+  const bal   = sqCfg?.bal?.[src];
+
+  const { rows, dates } = agg(sqCfg.domains, [src]);
+  const r = rows[0] || null;
+  const kpi = computeKPIs(r, T2_MODE);
+  const coLabel = co.toUpperCase();
+
+  // Header
+  let html = `<div class="squad-hdr">
+    <div><span class="company-tag" style="background:${CFG[co].hex}">${coLabel}</span></div>
+    <div class="squad-name">${sq} <span style="font-size:13px;font-weight:600;color:${SC(src)};margin-left:6px">· ${src}</span></div>
+  </div>`;
+
+  // Mode badge
+  html += `<div style="margin-bottom:12px">
+    <span style="font-size:11px;color:var(--muted)">Exibindo: <strong style="color:var(--text)">${kpi.label || (T2_MODE === 'total' ? 'total do período' : 'média por dia')}</strong></span>
+  </div>`;
+
+  // Main KPIs
+  html += `<div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-l">mRPMS ${T2_MODE === 'avg' ? '(média/dia)' : '(período)'}</div>
+      <div class="kpi-v">${usd(kpi.mRPMS)}</div>
+      <div class="kpi-s">${kpi.sess ? num(kpi.sess)+' sessões' : ''}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">eCPM ${T2_MODE === 'avg' ? '(média/dia)' : '(período)'}</div>
+      <div class="kpi-v">${usd(kpi.eCPM)}</div>
+      <div class="kpi-s">${kpi.imp ? num(Math.round(kpi.imp))+' impressões' : ''}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">Revenue ${T2_MODE === 'avg' ? '(média/dia)' : '(total)'}</div>
+      <div class="kpi-v">${usd(kpi.rev)}</div>
+      <div class="kpi-s">${kpi.req ? num(Math.round(kpi.req))+' requests' : ''}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">Balancer Slug</div>
+      <div class="kpi-v" style="font-size:11px;font-family:monospace;word-break:break-all;line-height:1.4">${bal?.slug || '—'}</div>
+      <div class="kpi-s">${bal?.urls?.length||0} URL(s) ativas</div>
+    </div>
+  </div>`;
+
+  // Extra behavior KPIs (scroll, duration, bounce) — these are always period averages
+  html += `<div class="t2-kpi-extra">
+    <div class="kpi">
+      <div class="kpi-l">Tempo Médio de Sessão</div>
+      <div class="kpi-v" style="font-size:18px">${r ? fmtDur(r.avgDur) : '—'}</div>
+      <div class="kpi-s" style="color:#aaa">média do período</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">Scroll Médio</div>
+      <div class="kpi-v" style="font-size:18px">${r?.avgScroll != null ? r.avgScroll.toFixed(1)+'%' : '—'}</div>
+      <div class="kpi-s" style="color:#aaa">média do período</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-l">Bounce Rate</div>
+      <div class="kpi-v" style="font-size:18px">${r ? fmtPct(r.bounce) : '—'}</div>
+      <div class="kpi-s" style="color:#aaa">sessões &lt; 15s</div>
+    </div>
+  </div>`;
+
+  // Balancer URLs
+  if (bal?.urls?.length) {
+    html += `<div class="sec-title">🔗 URL Balancer — estado atual</div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-hdr">URLs Ativas · ${src}</div>
+      <table style="min-width:0"><thead><tr>
+        <th style="text-align:left;width:90px">% Balancer</th>
+        <th style="text-align:left">URL (path)</th>
+        <th style="text-align:left">Site</th>
+      </tr></thead><tbody>`;
+    bal.urls.forEach(u => {
+      html += `<tr>
+        <td style="text-align:left">
+          <span class="url-bar" style="width:${Math.round(u.p*0.45)}px;background:${SC(src)}"></span>
+          <strong>${u.p}%</strong>
+        </td>
+        <td style="text-align:left"><a href="${u.u}" target="_blank" class="url-a">${pth(u.u)}</a></td>
+        <td style="text-align:left;color:var(--muted)">${u.s}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // Daily table + URL chart
+  if (r?.trend?.length) {
+    const filtered = r.trend.filter(t => t.rev > 0 || t.sess > 0);
+    if (filtered.length) {
+      html += `<div class="sec-title">📅 Performance Diária</div>
+      <div class="t2-grid">
+        <div class="card">
+          <div class="card-hdr">Daily — ${src}</div>
+          <div class="tbl-scroll">
+          <table><thead><tr>
+            <th style="text-align:left">Data</th>
+            <th>Revenue</th><th>mRPMS</th><th>eCPM</th><th>Sessões</th><th>Requests</th>
+          </tr></thead><tbody>`;
+      [...filtered].reverse().forEach(t => {
+        const dailyEcpm = t.rev > 0 && r.imp > 0
+          ? null  // we don't have daily impressions in trend; omit
+          : null;
+        html += `<tr>
+          <td style="text-align:left">${t.date}</td>
+          <td>${usd(t.rev)}</td>
+          <td><strong style="color:${SC(src)}">${t.mRPMS != null ? usd(t.mRPMS) : '—'}</strong></td>
+          <td>—</td>
+          <td>${num(t.sess)}</td>
+          <td>${num(t.req)}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div></div>
+        <div class="card">
+          <div class="card-hdr">mRPMS por URL</div>
+          <div class="chart-wrap"><canvas id="ct2url"></canvas></div>
+        </div>
+      </div>`;
+    }
+  }
+
+  ['t2url'].forEach(k => { if (CHARTS[k]) { try { CHARTS[k].destroy(); } catch{} delete CHARTS[k]; } });
+  body.innerHTML = html;
+
+  if (bal?.urls?.length && r?.trend?.length) {
+    loadT2UrlChart(co, sq, src, sqCfg, bal, dates, r.trend);
+  }
+}
+
+// ── ALL SOURCES VIEW ───────────────────────────────────────────────────────
+function renderT2AllSources(co, sq, sqCfg) {
+  const body    = $('t2body');
+  const coLabel = co.toUpperCase();
+
+  // Collect dates from revenue data for this squad
+  const domSet = new Set(sqCfg.domains);
+  const dateSet = new Set(
+    RAW_REV.filter(r => domSet.has(r.domain)).map(r => r.date)
+  );
+  const dates = [...dateSet].sort();
+
+  // Count total URLs across all sources
+  const allUrls = Object.entries(sqCfg.bal || {}).flatMap(([srcName, balCfg]) =>
+    (balCfg.urls || []).map(u => ({ src: srcName, url: u }))
+  );
+
+  let html = `
+    <div class="squad-hdr">
+      <div><span class="company-tag" style="background:${CFG[co].hex}">${coLabel}</span></div>
+      <div class="squad-name">${sq}
+        <span style="font-size:12px;font-weight:500;color:var(--muted);margin-left:8px">
+          · ${allUrls.length} URLs ativas · ${Object.keys(sqCfg.bal||{}).length} sources
+        </span>
+      </div>
+      <div class="squad-doms">${sqCfg.domains.slice(0,5).join(' · ')}</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-hdr">
+        mRPMS por URL — evolução diária
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="card-hdr-hint" style="margin-right:4px">Agrupar por</span>
+          <div class="btn-grp">
+            <button class="grp-btn ${T2_URL_GROUP === 'source' ? 'act' : ''}"
+              onclick="setUrlGroup('source',this)" style="font-size:11px;padding:2px 8px">Source</button>
+            <button class="grp-btn ${T2_URL_GROUP === 'url' ? 'act' : ''}"
+              onclick="setUrlGroup('url',this)" style="font-size:11px;padding:2px 8px">URL consolidada</button>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px;height:340px;position:relative">
+        <canvas id="ct2all"></canvas>
+      </div>
+    </div>
+
+    <div class="sec-title">🔗 URLs Ativas por Source</div>
+    <div class="card">
+      <div class="card-hdr" style="justify-content:space-between">
+        <span>Todas as URLs do Squad</span>
+        <span id="urlhidden_pill_${safeId(co+'||'+sq)}"
+          class="hidden-pill" style="display:none"
+          onclick="showAllUrlRows('${(co+'||'+sq).replace(/'/g,"\\'")}')">
+        </span>
+      </div>
+      <div class="tbl-scroll">
+      <table style="min-width:600px"><thead><tr>
+        <th style="text-align:left">Source</th>
+        <th style="text-align:left">URL</th>
+        <th style="text-align:right">%</th>
+        <th style="text-align:left">Site</th>
+        <th style="text-align:right">mRPMS atual</th>
+        <th style="text-align:right">vs período ant.</th>
+      </tr></thead><tbody>`;
+
+  Object.entries(sqCfg.bal || {}).forEach(([srcName, balCfg]) => {
+    (balCfg.urls || []).forEach((u, i) => {
+      const rid = 'urlrow_' + safeId(srcName + '_' + normalizeUrl(u.u));
+      const coSqEscU = (co+'||'+sq).replace(/'/g,"\\'");
+      const ridEsc = rid.replace(/'/g,"\\'");
+      const isHidden = HIDDEN_URLS[co+'||'+sq]?.has(rid) ? ' urlrow-hidden' : '';
+      html += `<tr id="${rid}" class="url-toggleable${isHidden}" onclick="toggleUrlRow('${coSqEscU}','${ridEsc}')">
+        <td style="text-align:left"><strong style="color:${SC(srcName)}">${srcName}</strong></td>
+        <td style="text-align:left"><a href="${u.u}" target="_blank" class="url-a" onclick="event.stopPropagation()">${u.u.replace(/^https?:\/\//,'')}</a></td>
+        <td>${u.p}%</td>
+        <td style="text-align:left;color:var(--muted)">${u.s}</td>
+        <td id="${rid}_rpms" style="text-align:right;color:var(--muted);font-size:11px">…</td>
+        <td id="${rid}_delta" style="text-align:right;font-size:11px;color:var(--muted)">…</td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody></table></div></div>`;
+
+  ['t2url','t2all'].forEach(k => { if (CHARTS[k]) { try { CHARTS[k].destroy(); } catch{} delete CHARTS[k]; } });
+  body.innerHTML = html;
+
+  // Restore hidden-pill state if rows were already hidden
+  _updateHiddenPill(co+'||'+sq);
+
+  // Load URL data for the full squad chart
+  loadT2AllUrlChart(co, sq, sqCfg, dates);
+}
+
+async function loadT2AllUrlChart(co, sq, sqCfg, dates) {
+  window._lastT2AllArgs = [co, sq, sqCfg, dates]; // saved for chart rebuild on toggle
+  let urlRows, sessBySrcDate, urlSrcData;
+
+  // Use cache if same squad + period (avoids re-query on grouping toggle)
+  if (T2_URL_CACHE && T2_URL_CACHE.co === co && T2_URL_CACHE.sq === sq &&
+      T2_URL_CACHE.from === ST.from && T2_URL_CACHE.to === ST.to) {
+    ({ urlRows, sessBySrcDate, urlSrcData } = T2_URL_CACHE);
+  } else {
+    const dl = sqCfg.domains.map(d=>`'${d}'`).join(',');
+    const sqlUrl =
+      `SELECT date, url_name, sum(gam_revenue) AS revenue, sum(gam_ad_impressions) AS impressions ` +
+      `FROM gam_report_daily_domain_url FINAL ` +
+      `WHERE date >= '${ST.from}' AND date < '${ST.to}' AND domain IN (${dl}) ` +
+      `GROUP BY date, url_name ORDER BY date, revenue DESC LIMIT 5000`;
+
+    urlRows = [];
+    let urlQueryFailed = false;
+    try {
+      const res = await apiQuery(sqlUrl);
+      urlRows = parseRows(res);
+    } catch(e) { urlRows = []; urlQueryFailed = true; }
+
+    const domSet = new Set(sqCfg.domains);
+    sessBySrcDate = {};
+
+    // Use global RAW_SESS if available, otherwise query sessions directly
+    let sessSource = RAW_SESS.filter(r => domSet.has(r.domain));
+    if (!sessSource.length) {
+      try {
+        const sqlSess2 =
+          `SELECT date, domain, utm_source AS source, sum(sessions) AS sessions ` +
+          `FROM vw_analytics_by_domain_source ` +
+          `WHERE date >= '${ST.from}' AND date < '${ST.to}' AND domain IN (${dl}) ` +
+          `GROUP BY date, domain, source LIMIT 5000`;
+        const sessRes = await apiQuery(sqlSess2);
+        sessSource = parseRows(sessRes).filter(r => domSet.has(r.domain));
+      } catch(_) {}
+    }
+
+    sessSource.forEach(r => {
+      const k = r.source+'|'+r.date;
+      sessBySrcDate[k] = (sessBySrcDate[k] || 0) + (+r.sessions || 0);
+    });
+
+    // Build revenue-by-date for every (normURL, srcName) pair
+    urlSrcData = {};
+    Object.entries(sqCfg.bal || {}).forEach(([srcName, balCfg]) => {
+      (balCfg.urls || []).forEach(u => {
+        const normU = normalizeUrl(u.u);
+        if (!urlSrcData[normU]) urlSrcData[normU] = {};
+        if (!urlSrcData[normU][srcName]) urlSrcData[normU][srcName] = { pct: u.p, byDate: {} };
+        urlRows.forEach(row => {
+          if (normalizeUrl(row.url_name) === normU) {
+            urlSrcData[normU][srcName].byDate[row.date] =
+              (urlSrcData[normU][srcName].byDate[row.date] || 0) + (+row.revenue || 0);
+          }
+        });
+      });
+    });
+
+    // ── Previous period: same duration shifted back ──────────────────────
+    const pp = prevPeriod();
+    const sqlPrevUrl =
+      `SELECT date, url_name, sum(gam_revenue) AS revenue ` +
+      `FROM gam_report_daily_domain_url FINAL ` +
+      `WHERE date >= '${pp.from}' AND date < '${pp.to}' AND domain IN (${dl}) ` +
+      `GROUP BY date, url_name LIMIT 5000`;
+    const sqlPrevSess =
+      `SELECT date, domain, utm_source AS source, sum(sessions) AS sessions ` +
+      `FROM vw_analytics_by_domain_source ` +
+      `WHERE date >= '${pp.from}' AND date < '${pp.to}' AND domain IN (${dl}) ` +
+      `GROUP BY date, domain, source LIMIT 5000`;
+
+    let prevUrlRows = [], prevSessRows = [];
+    try {
+      const [pu, ps] = await Promise.allSettled([
+        apiQuery(sqlPrevUrl),
+        apiQuery(sqlPrevSess)
+      ]);
+      prevUrlRows  = pu.status === 'fulfilled' ? parseRows(pu.value) : [];
+      prevSessRows = ps.status === 'fulfilled' ? parseRows(ps.value) : [];
+    } catch(_) {}
+
+    // Build prev sessions map
+    const prevSessBySrcDate = {};
+    const domSetLocal = new Set(sqCfg.domains);
+    prevSessRows.filter(r => domSetLocal.has(r.domain)).forEach(r => {
+      const k = r.source+'|'+r.date;
+      prevSessBySrcDate[k] = (prevSessBySrcDate[k] || 0) + (+r.sessions || 0);
+    });
+
+    // Build prev urlSrcData
+    const prevUrlSrcData = {};
+    Object.entries(sqCfg.bal || {}).forEach(([srcName, balCfg]) => {
+      (balCfg.urls || []).forEach(u => {
+        const normU = normalizeUrl(u.u);
+        if (!prevUrlSrcData[normU]) prevUrlSrcData[normU] = {};
+        if (!prevUrlSrcData[normU][srcName]) prevUrlSrcData[normU][srcName] = { pct: u.p, byDate: {} };
+        prevUrlRows.forEach(row => {
+          if (normalizeUrl(row.url_name) === normU) {
+            prevUrlSrcData[normU][srcName].byDate[row.date] =
+              (prevUrlSrcData[normU][srcName].byDate[row.date] || 0) + (+row.revenue || 0);
+          }
+        });
+      });
+    });
+
+    // Save to cache (include prev data)
+    T2_URL_CACHE = { co, sq, from: ST.from, to: ST.to,
+                     urlRows, sessBySrcDate, urlSrcData,
+                     prevUrlSrcData, prevSessBySrcDate, pp,
+                     queryFailed: urlQueryFailed };
+  } // end else (cache miss)
+
+  // Destructure prev period data from cache
+  const { prevUrlSrcData, prevSessBySrcDate, pp: ppDates, queryFailed } = T2_URL_CACHE;
+
+  const datasets = [];
+  let colorIdx = 0;
+  const hiddenRids = HIDDEN_URLS[co+'||'+sq] || new Set();
+
+  if (T2_URL_GROUP === 'source') {
+    // ── POR SOURCE: one line per (source, URL) pair ──────────────────────
+    Object.entries(sqCfg.bal || {}).forEach(([srcName, balCfg]) => {
+      (balCfg.urls || []).forEach(u => {
+        const normU = normalizeUrl(u.u);
+        const rid = 'urlrow_' + safeId(srcName + '_' + normU);
+        if (hiddenRids.has(rid)) return; // skip hidden rows
+        const srcEntry = urlSrcData[normU]?.[srcName];
+        if (!srcEntry) return;
+        const data = dates.map(d => {
+          const rev  = srcEntry.byDate[d] || 0;
+          const sess = (sessBySrcDate[srcName+'|'+d] || 0) * (u.p / 100);
+          if (!rev || !sess) return null;
+          return +((rev / sess) * 1000).toFixed(2);
+        });
+        if (data.some(v => v != null)) {
+          const color = URL_PALETTE[colorIdx++ % URL_PALETTE.length];
+          datasets.push({
+            label: `[${srcName}] ${pth(u.u)} (${u.p}%)`,
+            data, borderColor: color, backgroundColor: 'transparent',
+            tension: 0.3, pointRadius: 2, borderWidth: 2, spanGaps: true
+          });
+        }
+      });
+    });
+
+  } else {
+    // ── POR URL consolidada: one line per unique URL across all sources ──
+    const uniqueUrls = [...new Set(
+      Object.values(sqCfg.bal || {}).flatMap(b => (b.urls||[]).map(u => normalizeUrl(u.u)))
+    )];
+
+    uniqueUrls.forEach(normU => {
+      // URL is hidden if ALL source rows for this URL are hidden
+      const srcNames = Object.keys(sqCfg.bal || {}).filter(sn =>
+        (sqCfg.bal[sn].urls||[]).some(u => normalizeUrl(u.u) === normU)
+      );
+      const allHidden = srcNames.every(sn =>
+        hiddenRids.has('urlrow_' + safeId(sn + '_' + normU))
+      );
+      if (allHidden) return;
+
+      const srcMap = urlSrcData[normU] || {};
+      const data = dates.map(d => {
+        let totalRev = 0, totalSess = 0;
+        Object.entries(srcMap).forEach(([srcName, entry]) => {
+          const rid = 'urlrow_' + safeId(srcName + '_' + normU);
+          if (hiddenRids.has(rid)) return; // skip hidden source contributions
+          totalRev  += entry.byDate[d] || 0;
+          totalSess += (sessBySrcDate[srcName+'|'+d] || 0) * (entry.pct / 100);
+        });
+        if (!totalRev || !totalSess) return null;
+        return +((totalRev / totalSess) * 1000).toFixed(2);
+      });
+      if (data.some(v => v != null)) {
+        const color = URL_PALETTE[colorIdx++ % URL_PALETTE.length];
+        const displayLabel = normU.includes('/') ? '/' + normU.split('/').slice(1).join('/') : normU;
+        datasets.push({
+          label: displayLabel,
+          data, borderColor: color,
+          backgroundColor: uniqueUrls.length === 1 ? color + '22' : 'transparent',
+          fill: uniqueUrls.length === 1,
+          tension: 0.3, pointRadius: 2, borderWidth: 2.5, spanGaps: true
+        });
+      }
+    });
+  }
+
+  // ── Populate mRPMS + delta cells in URL table ─────────────────────────
+  // Always runs — before the chart early-return — so cells never stay "…"
+  // Returns { mrpms, noRev, noSess } for detailed cell rendering
+  function computeUrlMrpmsDetail(normU, srcName, pct, srcDataMap, sessMap) {
+    const entry = srcDataMap?.[normU]?.[srcName];
+    if (!entry) return { mrpms: null, noRev: true, noSess: false };
+    let totalRev = 0, totalSess = 0;
+    Object.keys(entry.byDate).forEach(d => {
+      totalRev  += entry.byDate[d] || 0;
+      totalSess += (sessMap[srcName+'|'+d] || 0) * (pct / 100);
+    });
+    if (!totalRev) return { mrpms: null, noRev: true, noSess: false };
+    if (!totalSess) return { mrpms: null, noRev: false, noSess: true };
+    return { mrpms: (totalRev / totalSess) * 1000, noRev: false, noSess: false };
+  }
+  // Backwards-compat scalar version
+  function computeUrlMrpms(normU, srcName, pct, srcDataMap, sessMap) {
+    return computeUrlMrpmsDetail(normU, srcName, pct, srcDataMap, sessMap).mrpms;
+  }
+
+  // If query failed, show retry button on first URL row and — on rest
+  if (queryFailed) {
+    let firstRid = null;
+    Object.entries(sqCfg.bal || {}).forEach(([srcName, balCfg]) => {
+      (balCfg.urls || []).forEach(u => {
+        const normU = normalizeUrl(u.u);
+        const rid   = 'urlrow_' + safeId(srcName + '_' + normU);
+        const rpmsEl  = $(rid + '_rpms');
+        const deltaEl = $(rid + '_delta');
+        if (!rpmsEl || !deltaEl) return;
+        if (!firstRid) {
+          firstRid = rid;
+          const coSqEsc = (co+'||'+sq).replace(/'/g,"\\'");
+          rpmsEl.innerHTML = `<button onclick="event.stopPropagation();_retryUrlChart('${coSqEsc}')"
+            style="font-size:10px;padding:2px 8px;background:#e84020;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">↺ Recarregar</button>`;
+        } else {
+          rpmsEl.textContent = '—';
+        }
+        deltaEl.textContent = '—';
+      });
+    });
+    return; // skip chart build too
+  }
+
+  Object.entries(sqCfg.bal || {}).forEach(([srcName, balCfg]) => {
+    (balCfg.urls || []).forEach(u => {
+      const normU   = normalizeUrl(u.u);
+      const rid     = 'urlrow_' + safeId(srcName + '_' + normU);
+      const rpmsEl  = $(rid + '_rpms');
+      const deltaEl = $(rid + '_delta');
+      if (!rpmsEl || !deltaEl) return;
+
+      const curD  = computeUrlMrpmsDetail(normU, srcName, u.p, urlSrcData, sessBySrcDate);
+      const curM  = curD.mrpms;
+      const prevM = computeUrlMrpms(normU, srcName, u.p, prevUrlSrcData, prevSessBySrcDate);
+
+      if (curM == null) {
+        if (curD.noSess) {
+          rpmsEl.innerHTML = `<span style="color:var(--muted);font-size:10px" title="Receita encontrada mas sem sessões para calcular mRPMS">sem sessões</span>`;
+        } else {
+          rpmsEl.textContent = '—';
+        }
+        deltaEl.textContent = '—';
+        return;
+      }
+
+      rpmsEl.innerHTML = `<strong style="font-size:13px;font-variant-numeric:tabular-nums">${usd(curM)}</strong>`;
+
+      if (prevM != null && prevM > 0) {
+        const diff  = curM - prevM;
+        const pctDiff = ((diff / prevM) * 100).toFixed(1);
+        const sign  = diff >= 0 ? '+' : '';
+        const color = diff >= 0 ? '#16a34a' : '#dc2626';
+        const arrow = diff >= 0 ? '▲' : '▼';
+        deltaEl.innerHTML =
+          `<span style="color:${color};font-weight:700;font-variant-numeric:tabular-nums">${arrow} ${sign}${usd(diff)}</span>` +
+          `<br><span style="color:${color};font-size:10px;opacity:0.8">${sign}${pctDiff}% vs ${ppDates.days}d ant.</span>`;
+      } else {
+        deltaEl.innerHTML = `<span style="color:var(--muted);font-size:10px">sem dado ant.</span>`;
+      }
+    });
+  });
+
+  // ── Chart ──────────────────────────────────────────────────────────────
+  const cv = $('ct2all');
+  if (!cv) return;
+  if (CHARTS['t2all']) { try { CHARTS['t2all'].destroy(); } catch{} }
+  if (!datasets.length) {
+    cv.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:12px">Sem dados de URL para o período</div>';
+    return;
+  }
+  CHARTS['t2all'] = new Chart(cv, {
+    type: 'line',
+    data: { labels: dates.map(d => d.slice(5)), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 10, font: { size: 10 }, padding: 6 }
+        }
+      },
+      scales: {
+        x: { ticks:{ font:{size:10} }, grid:{ display:false } },
+        y: { ticks:{ font:{size:10}, callback: v => '$'+v.toFixed(0) }, grid:{ color:'#f0f2f5' } }
+      }
+    }
+  });
+}
+
+// ── URL mRPMS CHART (single source) ───────────────────────────────────────
+async function loadT2UrlChart(co, sq, src, sqCfg, bal, dates) {
+  const dl = sqCfg.domains.map(d=>`'${d}'`).join(',');
+  const sqlUrl =
+    `SELECT date, url_name, sum(gam_revenue) AS revenue, sum(gam_ad_impressions) AS impressions ` +
+    `FROM gam_report_daily_domain_url FINAL ` +
+    `WHERE date >= '${ST.from}' AND date < '${ST.to}' AND domain IN (${dl}) ` +
+    `GROUP BY date, url_name ORDER BY date, revenue DESC LIMIT 3000`;
+
+  let urlRows = [];
+  try {
+    const res = await apiQuery(sqlUrl);
+    urlRows = parseRows(res);
+  } catch(e) { return; }
+  if (!urlRows.length) return;
+
+  const domSet = new Set(sqCfg.domains);
+  const sessByDate = {};
+  RAW_SESS.filter(r => domSet.has(r.domain) && r.source === src).forEach(r => {
+    sessByDate[r.date] = (sessByDate[r.date] || 0) + (+r.sessions || 0);
+  });
+
+  const datasets = bal.urls.map((u, i) => {
+    const normU = normalizeUrl(u.u);
+    const revByDate = {};
+    urlRows.forEach(row => {
+      if (normalizeUrl(row.url_name) === normU) {
+        revByDate[row.date] = (revByDate[row.date] || 0) + (+row.revenue || 0);
+      }
+    });
+    const data = dates.map(d => {
+      const rev  = revByDate[d] || 0;
+      const sess = (sessByDate[d] || 0) * (u.p / 100);
+      if (!rev || !sess) return null;
+      return +((rev / sess) * 1000).toFixed(2);
+    });
+    const color = URL_PALETTE[i % URL_PALETTE.length];
+    return {
+      label: pth(u.u) + ` (${u.p}%)`,
+      data, borderColor: color,
+      backgroundColor: bal.urls.length === 1 ? color + '22' : 'transparent',
+      fill: bal.urls.length === 1,
+      tension: 0.3, pointRadius: 3, borderWidth: 2.5, spanGaps: true
+    };
+  });
+
+  const cv = $('ct2url');
+  if (!cv) return;
+  if (CHARTS['t2url']) { try { CHARTS['t2url'].destroy(); } catch{} }
+  CHARTS['t2url'] = new Chart(cv, {
+    type: 'line',
+    data: { labels: dates.map(d => d.slice(5)), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'bottom', labels:{ boxWidth:10, font:{size:10}, padding:6 } } },
+      scales: {
+        x: { ticks:{ font:{size:10} }, grid:{ display:false } },
+        y: { ticks:{ font:{size:10}, callback: v => '$'+v.toFixed(0) }, grid:{ color:'#f0f2f5' } }
+      }
+    }
+  });
+}
+
+// ── BOOT ───────────────────────────────────────────────────────────────────
+function loadData() { _loadDataInner(); }
+
+(function init() {
+  ST.from = dago(7); ST.to = today();
+  $('df').value = ST.from;
+  $('dt').value = ST.to;
+  setTimeout(loadData, 300);
+})();
+</script>
+</body>
+</html>
