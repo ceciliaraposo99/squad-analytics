@@ -5,10 +5,10 @@
  * que faz proxy das queries SQL para o InCred Mesh (ClickHouse HTTP).
  *
  * Variáveis de ambiente necessárias no Railway:
- *   MESH_URL      → URL HTTP do ClickHouse, ex: https://ch.incredhq.com
- *   MESH_USER     → usuário do ClickHouse
- *   MESH_PASSWORD → senha do ClickHouse
- *   MESH_DB       → database (default: default)
+ *   CH_URL      → URL HTTP do ClickHouse, ex: https://ch.incredhq.com
+ *   CH_USER     → usuário do ClickHouse
+ *   CH_PASSWORD → senha do ClickHouse
+ *   CH_DATABASE       → database (default: default)
  *   PORT          → porta (Railway injeta automaticamente)
  */
 
@@ -28,31 +28,31 @@ app.post('/api/query', async (req, res) => {
     return res.status(400).json({ error: 'Campo "sql" obrigatório.' });
   }
 
-  const MESH_URL = process.env.MESH_URL;
-  const MESH_USER = process.env.MESH_USER;
-  const MESH_PASSWORD = process.env.MESH_PASSWORD;
-  const MESH_DB = process.env.MESH_DB || 'default';
+  const CH_URL = process.env.CH_URL;
+  const CH_USER = process.env.CH_USER;
+  const CH_PASSWORD = process.env.CH_PASSWORD;
+  const CH_DATABASE = process.env.CH_DATABASE || 'default';
 
-  if (!MESH_URL || !MESH_USER || !MESH_PASSWORD) {
+  if (!CH_URL || !CH_USER || !CH_PASSWORD) {
     console.error('[api/query] Variáveis de ambiente do Mesh não configuradas.');
     return res.status(500).json({
-      error: 'Mesh não configurado. Defina MESH_URL, MESH_USER e MESH_PASSWORD no Railway.'
+      error: 'Mesh não configurado. Defina CH_URL, CH_USER e CH_PASSWORD no Railway.'
     });
   }
 
   try {
     // ClickHouse HTTP interface: POST com o SQL no body, formato JSON cada linha
     const chUrl = new URL('/');
-    chUrl.host = new URL(MESH_URL).host;
-    chUrl.protocol = new URL(MESH_URL).protocol;
-    chUrl.searchParams.set('database', MESH_DB);
+    chUrl.host = new URL(CH_URL).host;
+    chUrl.protocol = new URL(CH_URL).protocol;
+    chUrl.searchParams.set('database', CH_DATABASE);
     chUrl.searchParams.set('default_format', 'JSONEachRow');
 
     const chRes = await fetch(chUrl.toString(), {
       method: 'POST',
       headers: {
-        'X-ClickHouse-User': MESH_USER,
-        'X-ClickHouse-Key': MESH_PASSWORD,
+        'X-ClickHouse-User': CH_USER,
+        'X-ClickHouse-Key': CH_PASSWORD,
         'Content-Type': 'text/plain',
       },
       body: sql + ' FORMAT JSONEachRow',
